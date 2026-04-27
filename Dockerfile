@@ -3,14 +3,14 @@ pipeline {
 
     environment {
         AWS_REGION = 'ap-south-1'
-        ECR_REGISTRY = '<ACCOUNT_ID>.dkr.ecr.ap-south-1.amazonaws.com'
+        ECR_REGISTRY = '519763206721.dkr.ecr.ap-south-1.amazonaws.com'
     }
 
     stages {
 
         stage('Clone Repo') {
             steps {
-                git 'https://github.com/YOUR_USERNAME/StreamingApp.git'
+                git 'https://github.com/yogeshvshinde/StreamingApp.git'
             }
         }
 
