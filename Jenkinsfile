@@ -16,8 +16,10 @@ pipeline {
 
         stage('Build Images') {
             steps {
-                sh 'docker build -t frontend ./frontend'
-                sh 'docker build -t backend ./backend'
+                sh 'docker build -t admin-service ./backend/adminService'
+                sh 'docker build -t auth-service ./backend/authService'
+                sh 'docker build -t chat-service ./backend/chatService'
+                sh 'docker build -t streaming-service ./backend/streamingService'
             }
         }
 
@@ -33,11 +35,15 @@ pipeline {
         stage('Push Images') {
             steps {
                 sh '''
-                docker tag frontend:latest $ECR_REGISTRY/frontend:latest
-                docker tag backend:latest $ECR_REGISTRY/backend:latest
+                docker tag admin-service:latest $ECR_REGISTRY/admin-service:latest
+                docker tag auth-service:latest $ECR_REGISTRY/auth-service:latest
+                docker tag chat-service:latest $ECR_REGISTRY/chat-service:latest
+                docker tag streaming-service:latest $ECR_REGISTRY/streaming-service:latest
 
-                docker push $ECR_REGISTRY/frontend:latest
-                docker push $ECR_REGISTRY/backend:latest
+                docker push $ECR_REGISTRY/admin-service:latest
+                docker push $ECR_REGISTRY/auth-service:latest
+                docker push $ECR_REGISTRY/chat-service:latest
+                docker push $ECR_REGISTRY/streaming-service:latest
                 '''
             }
         }
