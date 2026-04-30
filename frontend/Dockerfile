@@ -1,15 +1,38 @@
-FROM node:18 as build
+# Stage 1: Build
+FROM node:18 AS build
 
 WORKDIR /app
 
+# Copy only package files first (better caching)
 COPY package*.json ./
+
 RUN npm install
 
+# Copy rest of the app
 COPY . .
 
+# Build-time variables
+ARG REACT_APP_AUTH_API_URL
+ARG REACT_APP_STREAMING_API_URL
+ARG REACT_APP_STREAMING_PUBLIC_URL
+ARG REACT_APP_ADMIN_API_URL
+ARG REACT_APP_CHAT_API_URL
+ARG REACT_APP_CHAT_SOCKET_URL
+
+# Set environment variables
+ENV REACT_APP_AUTH_API_URL=$REACT_APP_AUTH_API_URL
+ENV REACT_APP_STREAMING_API_URL=$REACT_APP_STREAMING_API_URL
+ENV REACT_APP_STREAMING_PUBLIC_URL=$REACT_APP_STREAMING_PUBLIC_URL
+ENV REACT_APP_ADMIN_API_URL=$REACT_APP_ADMIN_API_URL
+ENV REACT_APP_CHAT_API_URL=$REACT_APP_CHAT_API_URL
+ENV REACT_APP_CHAT_SOCKET_URL=$REACT_APP_CHAT_SOCKET_URL
+
+# Build the app
 RUN npm run build
 
-FROM nginx:alpine
+
+# Stage 2: Serve with nginx
+FROM nginx:1.27-alpine AS production
 
 COPY --from=build /app/build /usr/share/nginx/html
 
