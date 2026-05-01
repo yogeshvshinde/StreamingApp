@@ -11,7 +11,7 @@ pipeline {
         stage('Clone Repo') {
             steps {
                 git credentialsId: 'github-creds',
-                    url: 'https://github.com/yogeshvshinde/StreamingApp.git'
+                    git branch: 'main', url: 'https://github.com/yogeshvshinde/StreamingApp.git'
             }
         }
 
