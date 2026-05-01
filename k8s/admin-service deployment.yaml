@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admin-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: admin-service
+  template:
+    metadata:
+      labels:
+        app: admin-service
+    spec:
+      containers:
+      - name: admin-service
+        image: 519763206721.dkr.ecr.ap-south-1.amazonaws.com/admin-service:latest
+        ports:
+        - containerPort: 3003
+        env:
+        - name: MONGO_URI
+          value: mongodb://mongo:27017/admindb

@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: chat-service
+  template:
+    metadata:
+      labels:
+        app: chat-service
+    spec:
+      containers:
+      - name: chat-service
+        image: 519763206721.dkr.ecr.ap-south-1.amazonaws.com/chat-service:latest
+        ports:
+        - containerPort: 3004
+        env:
+        - name: MONGO_URI
+          value: mongodb://mongo:27017/chatdb

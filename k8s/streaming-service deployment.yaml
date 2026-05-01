@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: streaming-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: streaming-service
+  template:
+    metadata:
+      labels:
+        app: streaming-service
+    spec:
+      containers:
+      - name: streaming-service
+        image: 519763206721.dkr.ecr.ap-south-1.amazonaws.com/streaming-service:latest
+        ports:
+        - containerPort: 3002
+        env:
+        - name: MONGO_URI
+          value: mongodb://mongo:27017/streamdb
