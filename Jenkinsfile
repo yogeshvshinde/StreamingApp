@@ -10,41 +10,47 @@ pipeline {
 
         stage('Clone Repo') {
             steps {
-                git 'https://github.com/yogeshvshinde/StreamingApp.git'
+                git credentialsId: 'github-creds',
+                    url: 'https://github.com/yogeshvshinde/StreamingApp.git'
             }
         }
 
-        stage('Build Images') {
-            steps {
-                sh 'docker build -t admin-service ./backend/adminService'
-                sh 'docker build -t auth-service ./backend/authService'
-                sh 'docker build -t chat-service ./backend/chatService'
-                sh 'docker build -t streaming-service ./backend/streamingService'
-            }
-        }
-
-        stage('Login to ECR') {
+        stage('Build Docker Images') {
             steps {
                 sh '''
-                aws ecr get-login-password --region $AWS_REGION | \
-                docker login --username AWS --password-stdin $ECR_REGISTRY
+                docker build -t auth-service ./backend/authService
+                docker build -t streaming-service ./backend/streamingService
+                docker build -t admin-service ./backend/adminService
+                docker build -t chat-service ./backend/chatService
+                docker build -t frontend ./frontend
                 '''
             }
         }
 
-        stage('Push Images') {
+        stage('Push to ECR') {
             steps {
-                sh '''
-                docker tag admin-service:latest $ECR_REGISTRY/admin-service:latest
-                docker tag auth-service:latest $ECR_REGISTRY/auth-service:latest
-                docker tag chat-service:latest $ECR_REGISTRY/chat-service:latest
-                docker tag streaming-service:latest $ECR_REGISTRY/streaming-service:latest
+                withAWS(credentials: 'aws-creds', region: 'ap-south-1') {
+                    sh '''
+                    aws ecr get-login-password | docker login --username AWS --password-stdin $ECR_REGISTRY
 
-                docker push $ECR_REGISTRY/admin-service:latest
-                docker push $ECR_REGISTRY/auth-service:latest
-                docker push $ECR_REGISTRY/chat-service:latest
-                docker push $ECR_REGISTRY/streaming-service:latest
-                '''
+                    for service in auth-service streaming-service admin-service chat-service frontend
+                    do
+                      docker tag $service:latest $ECR_REGISTRY/$service:latest
+                      docker push $ECR_REGISTRY/$service:latest
+                    done
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy to EKS') {
+            steps {
+                withAWS(credentials: 'aws-creds', region: 'ap-south-1') {
+                    sh '''
+                    aws eks update-kubeconfig --region $AWS_REGION --name mern-cluster
+                    kubectl apply -f k8s/
+                    '''
+                }
             }
         }
     }
