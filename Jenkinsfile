@@ -39,13 +39,11 @@ pipeline {
 
         stage('Login to ECR') {
             steps {
-                withAWS(credentials: 'aws-creds', region: "${AWS_REGION}") {
-                    sh '''
-                    echo "Logging into ECR..."
-                    aws ecr get-login-password --region $AWS_REGION | \
-                    docker login --username AWS --password-stdin $ECR_REGISTRY
-                    '''
-                }
+                sh '''
+                echo "Logging into ECR..."
+                aws ecr get-login-password --region $AWS_REGION | \
+                docker login --username AWS --password-stdin $ECR_REGISTRY
+                '''
             }
         }
 
@@ -56,8 +54,8 @@ pipeline {
 
                 for service in auth-service streaming-service admin-service chat-service frontend
                 do
-                  docker tag $service:latest $ECR_REGISTRY/$service:latest
-                  docker push $ECR_REGISTRY/$service:latest
+                docker tag $service:latest $ECR_REGISTRY/$service:latest
+                docker push $ECR_REGISTRY/$service:latest
                 done
                 '''
             }
@@ -65,27 +63,22 @@ pipeline {
 
         stage('Deploy to EKS') {
             steps {
-                withAWS(credentials: 'aws-creds', region: "${AWS_REGION}") {
-                    sh '''
-                    echo "Deploying to EKS..."
+                sh '''
+                echo "Deploying to EKS..."
 
-                    aws eks update-kubeconfig --region $AWS_REGION --name $CLUSTER_NAME
+                aws eks update-kubeconfig --region $AWS_REGION --name mern-cluster
+                kubectl apply -f k8s/
+                '''
+            }
+        }
 
-                    kubectl apply -f k8s/
-
-                    kubectl get pods
-                    '''
-                }
+        post {
+            success {
+                echo '✅ Deployment successful!'
+            }
+            failure {
+                echo '❌ Deployment failed!'
             }
         }
     }
 
-    post {
-        success {
-            echo '✅ Deployment successful!'
-        }
-        failure {
-            echo '❌ Deployment failed!'
-        }
-    }
-}
