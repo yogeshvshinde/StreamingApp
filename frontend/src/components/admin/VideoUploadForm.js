@@ -47,6 +47,7 @@ export const VideoUploadForm = ({ onUploadComplete }) => {
     description: '',
     genre: '',
     releaseYear: new Date().getFullYear(),
+    durationSeconds: '',
     isFeatured: false,
   });
 
@@ -114,7 +115,29 @@ export const VideoUploadForm = ({ onUploadComplete }) => {
       setError('Please select a thumbnail image');
       return false;
     }
+    if (formData.durationSeconds && Number(formData.durationSeconds) <= 0) {
+      setError('Duration must be a positive number of seconds');
+      return false;
+    }
     return true;
+  };
+
+  const resolveDurationSeconds = async () => {
+    try {
+      const detectedDuration = Math.round(await getVideoDuration(videoFile));
+      if (detectedDuration > 0) {
+        return detectedDuration;
+      }
+    } catch (durationError) {
+      console.warn('Unable to read video metadata:', durationError);
+    }
+
+    const manualDuration = Number(formData.durationSeconds);
+    if (manualDuration > 0) {
+      return Math.round(manualDuration);
+    }
+
+    throw new Error('Unable to read video metadata. Enter the video duration manually in seconds.');
   };
 
   const handleSubmit = async (event) => {
@@ -129,10 +152,7 @@ export const VideoUploadForm = ({ onUploadComplete }) => {
     setUploadProgress(0);
 
     try {
-      const durationSeconds = Math.round(await getVideoDuration(videoFile));
-      if (!durationSeconds) {
-        throw new Error('Unable to determine video duration');
-      }
+      const durationSeconds = await resolveDurationSeconds();
 
       const { thumbnailKey } = await adminService.uploadThumbnailFile(thumbnailFile);
 
@@ -163,6 +183,7 @@ export const VideoUploadForm = ({ onUploadComplete }) => {
         description: '',
         genre: '',
         releaseYear: new Date().getFullYear(),
+        durationSeconds: '',
         isFeatured: false,
       });
       setVideoFile(null);
@@ -173,7 +194,7 @@ export const VideoUploadForm = ({ onUploadComplete }) => {
       }
     } catch (uploadError) {
       console.error('Error uploading video:', uploadError);
-      setError(uploadError.response?.data?.message || 'Error uploading video');
+      setError(uploadError.response?.data?.message || uploadError.message || 'Error uploading video');
     } finally {
       setUploading(false);
     }
@@ -249,6 +270,19 @@ export const VideoUploadForm = ({ onUploadComplete }) => {
             value={formData.releaseYear}
             onChange={handleInputChange}
             required
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            type="number"
+            label="Duration (seconds)"
+            name="durationSeconds"
+            value={formData.durationSeconds}
+            onChange={handleInputChange}
+            inputProps={{ min: 1 }}
+            helperText="Optional unless the browser cannot read the video metadata"
           />
         </Grid>
 
