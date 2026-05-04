@@ -7,13 +7,18 @@ Go to:
 
 Click **Fork** → create your own copy.
 
+--------------------------------------------------------------
+
 **Clone your fork**
 
 git clone https://github.com/yogeshvshinde/StreamingApp.git
 
 cd StreamingApp
 
-![](media/image1.png){width="6.268055555555556in" height="1.4034722222222222in"}
+<img width="940" height="211" alt="image" src="https://github.com/user-attachments/assets/a2d4eb51-59a4-4290-a73e-92e0fe60f2ba" />
+
+
+
 
 **Add upstream**
 
