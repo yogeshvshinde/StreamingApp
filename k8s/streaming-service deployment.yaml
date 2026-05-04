@@ -20,3 +20,8 @@ spec:
         env:
         - name: MONGO_URI
           value: mongodb://mongo:27017/streamdb
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: streaming-app-secrets
+              key: JWT_SECRET
