@@ -9,6 +9,7 @@ pipeline {
         AWS_REGION = 'ap-south-1'
         ECR_REGISTRY = '519763206721.dkr.ecr.ap-south-1.amazonaws.com'
         CLUSTER_NAME = 'mern-cluster'
+        AWS_CREDENTIALS_ID = 'aws-creds'
     }
 
     stages {
@@ -42,11 +43,16 @@ pipeline {
 
         stage('Login to ECR') {
             steps {
-                sh '''
-                echo "Logging into ECR..."
-                aws ecr get-login-password --region $AWS_REGION | \
-                docker login --username AWS --password-stdin $ECR_REGISTRY
-                '''
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: AWS_CREDENTIALS_ID
+                ]]) {
+                    sh '''
+                    echo "Logging into ECR..."
+                    aws ecr get-login-password --region $AWS_REGION | \
+                    docker login --username AWS --password-stdin $ECR_REGISTRY
+                    '''
+                }
             }
         }
 
@@ -66,16 +72,25 @@ pipeline {
 
         stage('Configure EKS Access') {
             steps {
-                sh '''
-                echo "Configuring kubeconfig..."
-                aws eks update-kubeconfig --region $AWS_REGION --name $CLUSTER_NAME
-                '''
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: AWS_CREDENTIALS_ID
+                ]]) {
+                    sh '''
+                    echo "Configuring kubeconfig..."
+                    aws eks update-kubeconfig --region $AWS_REGION --name $CLUSTER_NAME
+                    kubectl get nodes
+                    '''
+                }
             }
         }
 
         stage('Create Kubernetes Secrets') {
             steps {
-                withCredentials([
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: AWS_CREDENTIALS_ID
+                ],
                     string(credentialsId: 'jwt-secret', variable: 'JWT_SECRET'),
                     string(credentialsId: 'aws-access-key-id', variable: 'APP_AWS_ACCESS_KEY_ID'),
                     string(credentialsId: 'aws-secret-access-key', variable: 'APP_AWS_SECRET_ACCESS_KEY'),
@@ -96,16 +111,21 @@ pipeline {
 
         stage('Deploy to EKS') {
             steps {
-                sh '''
-                echo "Deploying to EKS..."
-                kubectl apply -f k8s/
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: AWS_CREDENTIALS_ID
+                ]]) {
+                    sh '''
+                    echo "Deploying to EKS..."
+                    kubectl apply -f k8s/
 
-                for deployment in auth-service streaming-service admin-service chat-service frontend
-                do
-                  kubectl rollout restart deployment/$deployment
-                  kubectl rollout status deployment/$deployment
-                done
-                '''
+                    for deployment in auth-service streaming-service admin-service chat-service frontend
+                    do
+                      kubectl rollout restart deployment/$deployment
+                      kubectl rollout status deployment/$deployment
+                    done
+                    '''
+                }
             }
         }
     }
