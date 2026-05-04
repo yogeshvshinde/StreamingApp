@@ -60,7 +60,28 @@ pipeline {
                 '''
             }
         }
-
+        stage('Create Kubernetes Secrets') {
+        steps {
+            withCredentials([
+                string(credentialsId: 'jwt-secret', variable: 'JWT_SECRET'),
+                string(credentialsId: 'aws-access-key-id', variable: 'APP_AWS_ACCESS_KEY_ID'),
+                string(credentialsId: 'aws-secret-access-key', variable: 'APP_AWS_SECRET_ACCESS_KEY'),
+                string(credentialsId: 's3-bucket-name', variable: 'AWS_S3_BUCKET'),
+                string(credentialsId: 'aws-cdn-url', variable: 'AWS_CDN_URL')
+            ]) {
+                sh '''
+                kubectl create secret generic streaming-app-secrets \
+                --from-literal=JWT_SECRET="$JWT_SECRET" \
+                --from-literal=AWS_REGION="$AWS_REGION" \
+                --from-literal=AWS_S3_BUCKET="$AWS_S3_BUCKET" \
+                --from-literal=AWS_ACCESS_KEY_ID="$APP_AWS_ACCESS_KEY_ID" \
+                --from-literal=AWS_SECRET_ACCESS_KEY="$APP_AWS_SECRET_ACCESS_KEY" \
+                --from-literal=AWS_CDN_URL="$AWS_CDN_URL" \
+                --dry-run=client -o yaml | kubectl apply -f -
+                '''
+            }
+        }
+    }
         stage('Deploy to EKS') {
             steps {
                 sh '''
