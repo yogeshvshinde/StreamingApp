@@ -19,7 +19,7 @@ spec:
         - containerPort: 3002
         env:
         - name: MONGO_URI
-          value: mongodb://mongo:27017/streamdb
+          value: mongodb://mongo:27017/admindb
         - name: JWT_SECRET
           valueFrom:
             secretKeyRef:
