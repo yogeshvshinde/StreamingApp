@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
       - name: mongo
-        image: mongo
+        image: 519763206721.dkr.ecr.ap-south-1.amazonaws.com/mongo:latest
         ports:
         - containerPort: 27017
